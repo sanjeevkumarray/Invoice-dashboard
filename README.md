@@ -2,90 +2,125 @@
 
 ## Multi-Tenant Billing Platform for CA Firms & Indian SMEs
 
-ReDi Invoice App is a modern billing and invoicing platform built for Chartered Accountant firms and Indian small businesses. The goal behind this project is simple: make invoice management easier, keep business data secure, and provide a reliable foundation that can scale as more organizations join the platform.
+ReDi Invoice App is a modern SaaS billing platform designed for Chartered Accountant firms and Indian small businesses.
 
-The application focuses on three important areas:
+The purpose of this project is simple — provide businesses with an easy way to create and manage invoices while maintaining strong data security, GST compliance, and a scalable architecture that can support multiple organizations.
+
+The platform is built around three core principles:
 
 * Accurate GST invoice calculations
-* Secure separation of business data
-* Fast performance even with large invoice volumes
+* Complete organization-level data isolation
+* Reliable performance at scale
 
-The system is designed as a multi-tenant SaaS platform where multiple organizations can use the same application while keeping their financial data completely isolated.
+ReDi follows a multi-tenant SaaS model where multiple businesses can use the same platform while keeping their financial records completely separated.
+
+---
+
+# Key Features
+
+✅ Multi-tenant organization support
+✅ Secure tenant-level data isolation
+✅ GST invoice calculations with CGST/SGST split
+✅ Invoice and line-item management
+✅ Optimized invoice listing for large datasets
+✅ Cursor-based pagination
+✅ PostgreSQL relational database design
+✅ Cloud-ready SaaS architecture
+
+---
+
+# Live Preview
+
+### Dashboard View
+
+<img width="1912" height="882" alt="Dashboard Preview" src="https://github.com/user-attachments/assets/b988dd9e-3b9d-4bba-9add-34c070145816" />
+
+### Invoice Management
+
+<img width="1651" height="857" alt="Invoice Management Preview" src="https://github.com/user-attachments/assets/809d42f6-2494-4e37-b41c-380380d115fe" />
+
+### Billing Interface
+
+<img width="1911" height="862" alt="Billing Interface Preview" src="https://github.com/user-attachments/assets/3e036117-b32e-4201-89e6-77d10294901d" />
 
 ---
 
 # Architecture & Multi-Tenant Design
 
-## Shared Database, Shared Schema Approach
+## Shared Database, Shared Schema Model
 
-ReDi uses a shared database and shared schema architecture with a dedicated `tenant_id` column to separate organizations at the data level.
+ReDi uses a shared database and shared schema architecture with a dedicated `tenant_id` column to maintain organization-level separation.
 
-This approach was selected because it provides a good balance between simplicity and scalability.
+This approach provides a practical balance between scalability, maintainability, and infrastructure simplicity.
 
-Instead of maintaining a separate database or schema for every customer, all organizations share the same infrastructure while their data remains logically separated.
+Instead of maintaining separate databases or schemas for every customer, all organizations use the same infrastructure while their data remains logically isolated.
 
-### Why this approach?
+## Why This Architecture?
 
-For an early and growing SaaS product, a shared schema model offers several practical advantages:
+For an early-stage SaaS product, this model provides several advantages:
 
-* Easier database maintenance
-* Faster feature rollouts
-* Simple migration management
-* Better use of database resources
-* Lower infrastructure overhead
+* Easier database management
+* Faster deployment and migrations
+* Efficient resource utilization
+* Simplified monitoring
+* Lower infrastructure complexity
 
-As the platform grows, this architecture can continue to scale while keeping operational complexity under control.
+This architecture allows the platform to grow without introducing unnecessary operational overhead.
 
 ---
 
-# Data Security & Tenant Isolation
+# Security & Tenant Isolation
 
-Security is one of the most important parts of a multi-tenant application.
+Data isolation is a critical requirement for any multi-tenant platform.
 
-ReDi does not trust tenant information coming directly from frontend requests.
+ReDi does not rely on tenant information provided directly from frontend requests.
 
-The tenant context is established at the API entry point using the trusted `x-tenant-id` header.
+Tenant context is established at the API entry layer using the trusted:
 
-The request flow works like this:
+```
+x-tenant-id
+```
+
+header.
+
+Request flow:
 
 1. API receives the request.
 2. Tenant identity is validated.
-3. Tenant context is attached to the request.
-4. Database queries automatically run within that tenant scope.
+3. Tenant context is attached to the request lifecycle.
+4. Database queries execute within the correct tenant scope.
 
-Because every database operation is tenant-aware, one organization cannot access another organization's invoices or records.
+Every database operation is tenant-aware, ensuring one organization cannot access another organization's invoices or business records.
 
-For example, if one company tries to request another company's invoice ID, the system will either return no data or reject the operation based on tenant validation.
+---
+
+# Database Infrastructure
+
+## Neon PostgreSQL
+
+ReDi uses Neon Serverless PostgreSQL as the primary database platform.
+
+Neon provides a flexible cloud-native PostgreSQL environment with efficient connection handling, making it suitable for modern SaaS applications.
+
+Database communication is secured using SSL/TLS encryption to ensure safe data transfer between application services and the database layer.
 
 ---
 
 # Database Design
 
-## Neon PostgreSQL Infrastructure
-
-The application uses Neon Serverless PostgreSQL as the primary database solution.
-
-Neon provides a flexible cloud database environment with efficient connection management, making it a strong fit for modern SaaS applications.
-
-Database connections are configured with secure SSL/TLS communication to ensure data is transferred safely between the application and database layer.
-
----
-
-# Database Structure
-
-The database follows a clean relational structure to keep data organized and maintainable.
+The database follows a normalized relational structure to maintain consistency and scalability.
 
 ## invoices
 
-The `invoices` table stores the main invoice information:
+The `invoices` table stores invoice-level information:
 
-* Organization ownership (`tenant_id`)
+* Tenant ownership
 * Customer details
-* Invoice dates
-* Invoice totals
-* GST summary values
+* Invoice metadata
+* Financial totals
+* GST summaries
 
-Stored calculations include:
+Stored values include:
 
 * Total taxable amount
 * Total CGST
@@ -96,49 +131,48 @@ Stored calculations include:
 
 ## invoice_items
 
-The `invoice_items` table stores individual products or services included in an invoice.
+The `invoice_items` table stores individual products and services inside an invoice.
 
-Each item is connected to its parent invoice using `invoice_id`.
+Each item is connected to the parent invoice using:
 
-This separation keeps the database normalized and makes it easier to:
+```
+invoice_id
+```
 
-* Add multiple items per invoice
-* Maintain detailed invoice history
-* Perform reporting and analysis efficiently
+This structure provides:
+
+* Better data organization
+* Easier reporting
+* Flexible invoice item management
+* Clean relational design
 
 ---
 
-# GST Calculation System
+# GST Calculation Engine
 
-The application supports Indian GST billing requirements.
-
-The calculation engine handles:
+ReDi supports Indian GST billing workflows with:
 
 * Multiple GST slabs
-* Item-level GST calculations
+* Item-level tax calculation
 * Invoice-level tax summaries
-* CGST and SGST distribution
+* Automatic CGST and SGST distribution
 
-For applicable intra-state transactions, GST is automatically divided equally:
+For applicable intra-state transactions:
 
 ```
 CGST = 50%
 SGST = 50%
 ```
 
-This helps businesses and CA professionals generate accurate tax invoices with minimal manual calculation.
+This reduces manual calculations and helps CA professionals generate accurate invoices efficiently.
 
 ---
 
 # Performance Optimization
 
-The invoice dashboard is designed to handle large datasets efficiently.
+The invoice dashboard is designed to handle large datasets efficiently, including 50,000+ invoice records.
 
-The system includes optimization strategies for handling 50,000+ invoices.
-
----
-
-## Composite Database Index
+## Composite Database Indexing
 
 A composite B-Tree index is created on:
 
@@ -146,39 +180,36 @@ A composite B-Tree index is created on:
 (tenant_id, created_at DESC, id DESC)
 ```
 
-This helps the database quickly find invoices belonging to a specific organization and return them in the required order.
+This improves:
 
-Benefits:
-
-* Faster invoice listing
-* Reduced database workload
-* Better dashboard performance
+* Tenant-specific invoice lookup
+* Sorting performance
+* Dashboard response time
+* Database query efficiency
 
 ---
 
 ## Cursor-Based Pagination
 
-Traditional pagination using:
+Traditional offset pagination:
 
 ```
 LIMIT 20 OFFSET 50000
 ```
 
-becomes slower as the dataset grows because the database still needs to scan previous records.
+becomes slower as datasets grow because the database must scan and skip previous records.
 
-ReDi uses cursor-based pagination instead.
-
-The API uses:
+ReDi uses cursor-based pagination with:
 
 * `cursorCreatedAt`
 * `cursorId`
 
-This provides:
+Benefits:
 
-* Consistent loading speed
-* Better performance on large datasets
-* Smooth scrolling experience
-* Fewer duplicate records during live updates
+* Stable performance on large datasets
+* Faster scrolling
+* Reduced duplicate records
+* Better handling of live data updates
 
 ---
 
@@ -186,24 +217,24 @@ This provides:
 
 ## Requirements
 
-Before running the project, make sure you have:
+Before starting the project:
 
 * Node.js v18+
-* npm installed
+* npm
 * Terminal access
 
 ---
 
-## Install Dependencies
+# Installation
 
-### Backend
+## Backend
 
 ```bash
 cd backend
 npm install
 ```
 
-### Frontend
+## Frontend
 
 ```bash
 cd frontend
@@ -214,31 +245,34 @@ npm install
 
 # Database Setup
 
-Run the migration and seed script from the backend directory:
+Run migrations and seed initial data:
 
 ```bash
+cd backend
+
 node bin/migrate-and-seed.js
 ```
 
 This will:
 
-* Create required database tables
-* Add performance indexes
-* Insert initial organization data
-* Prepare the application database
+* Create database tables
+* Configure indexes
+* Insert sample organizations
+* Prepare the development database
 
 ---
 
-# Start the Application
+# Running the Application
 
-## Backend Server
+## Backend API
 
 ```bash
 cd backend
+
 node server.js
 ```
 
-Backend runs on:
+Runs on:
 
 ```
 http://localhost:5000
@@ -246,14 +280,15 @@ http://localhost:5000
 
 ---
 
-## Frontend Application
+## Frontend
 
 ```bash
 cd frontend
+
 npm run dev
 ```
 
-Frontend runs on:
+Runs on:
 
 ```
 http://localhost:5173
@@ -263,53 +298,52 @@ http://localhost:5173
 
 # Future Improvements
 
-The current system provides a strong foundation, but there are several improvements planned for future versions.
+## PostgreSQL Row Level Security (RLS)
 
-## PostgreSQL Row Level Security
+Future versions can introduce PostgreSQL Row Level Security to enforce tenant isolation directly at the database level.
 
-Adding PostgreSQL Row Level Security (RLS) would provide another layer of protection by allowing the database itself to enforce tenant boundaries.
-
-This creates a stronger defense model where both the application and database protect customer data.
+This provides an additional security layer where both the application and database protect customer data.
 
 ---
 
-## Better Financial Precision
+## Financial Precision Improvements
 
-JavaScript numbers use floating-point representation, which can sometimes create small rounding differences in financial calculations.
+JavaScript floating-point calculations can introduce small rounding differences.
 
-For a larger accounting system, future improvements would include:
+For a production accounting system, future improvements include:
 
-* Storing currency values in paise
-* Using decimal-based calculations
-* Adding stricter financial rounding rules
+* Storing amounts as paise
+* Using decimal arithmetic libraries
+* Implementing stricter rounding rules
 
 ---
 
 ## API Idempotency
 
-To handle accidental duplicate submissions caused by network issues, invoice creation APIs can support idempotency keys.
+Adding idempotency keys for invoice creation will help prevent duplicate invoices caused by:
 
-This will help:
+* Network interruptions
+* Accidental multiple submissions
+* Client retries
 
-* Prevent duplicate invoices
-* Improve API reliability
-* Create safer user experiences
+This improves reliability for business-critical workflows.
 
 ---
 
-# Built With
+# Technology Stack
 
 * Node.js
 * Express.js
+* React
+* Vite
 * PostgreSQL
 * Neon Serverless Database
-* React + Vite
 * REST APIs
 
 ---
 
-# Project Goal
+# Project Vision
 
-ReDi Invoice App is built with a practical goal: provide Indian businesses and accounting professionals with a simple, secure, and scalable billing solution.
+ReDi Invoice App is built to simplify billing workflows for Indian businesses and accounting professionals.
 
-The focus is not only on creating invoices, but on building a reliable SaaS foundation that can support real businesses as they grow.
+The focus is not only on generating invoices, but on creating a secure and scalable SaaS foundation that can grow with real-world business requirements.
